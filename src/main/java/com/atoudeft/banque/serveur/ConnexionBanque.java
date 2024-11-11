@@ -30,7 +30,11 @@ public class ConnexionBanque extends Connexion {
      */
     public boolean estInactifDepuis(long delai) {
         //À définir :
-        throw new NotImplementedException();//ligne à supprimer
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - tempsDerniereOperation >= delai) {
+            return true;
+        }
+        return false;
     }
 
     /**

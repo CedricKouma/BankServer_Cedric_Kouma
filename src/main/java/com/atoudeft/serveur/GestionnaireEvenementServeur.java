@@ -1,6 +1,6 @@
 package com.atoudeft.serveur;
 
-import com.atoudeft.banque.Banque;
+import com.atoudeft.banque.*;
 import com.atoudeft.banque.serveur.ConnexionBanque;
 import com.atoudeft.banque.serveur.ServeurBanque;
 import com.atoudeft.commun.evenement.Evenement;
@@ -80,6 +80,219 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                             cnx.envoyer("NOUVEAU NO "+t[0]+" existe");
                     }
                     break;
+                /******************* COMMANDES DE CONNEXION *******************/
+                case "CONNECT": // Connecter un client a son compte :
+                    argument = evenement.getArgument();
+                    t = argument.split(":");
+                    numCompteClient = t[0];
+                    nip = t[1];
+
+                    String numerosComptesDejaConnecte = serveurBanque.list();
+
+                    String[] listNumeroCompteConnecte = numerosComptesDejaConnecte.split("\\.");
+
+                    for (String numeroCpt : listNumeroCompteConnecte) {
+                        if (numeroCpt.equals(numCompteClient)) {
+                            cnx.envoyer("CONNECT NO ");
+                        }
+                        else {
+                            banque = serveurBanque.getBanque();
+                            CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                            if( cptClient != null && nip.equals(cptClient.getNip())){
+
+                                String numeroCompteCheque = banque.getNumeroCompteParDefaut(numCompteClient);
+
+
+                                cnx.setNumeroCompteActuel(numeroCompteCheque);
+                                cnx.setNumeroCompteClient(numCompteClient);
+
+                                cnx.envoyer("CONNECT OK");
+                            }
+
+                            else {
+                                cnx.envoyer("CONNECT NO");
+                            }
+
+
+                        }
+                    }
+                    break;
+
+                /******************* CREATION COMPTE EPARGNE *******************/
+                case "EPARGNE": // Creer un compte epargne, s'il n'en n'a pas deja un
+                    numCompteClient= cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                   if(numCompteClient == null || numCompteClient.isEmpty()){
+                       cnx.envoyer("EPARGNE NO");
+                   }
+                   if(banque.possedeUnCompteEpargne(numCompteClient)){
+                       cnx.envoyer("EPARGNE NO");
+                   }
+                   else {
+                       String nouveauNumero;
+                       do {
+                           nouveauNumero = CompteBancaire.genereNouveauNumero();
+                       } while (banque.estNumeroDeCompteBancaireExistant(nouveauNumero));
+                       CompteEpargne cptEpargne = new CompteEpargne(nouveauNumero, 5);
+                       CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                       cptClient.ajouter(cptEpargne);
+                   }
+                break;
+
+
+                /******************* SELECT COMPTE *******************/
+                case "SELECT": // Switcher entre les comptes
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("SELECT NO");
+                    }
+                    else {
+                        argument = evenement.getArgument();
+                        TypeCompte typeCompte = TypeCompte.fromString(argument);
+                        if(typeCompte != null){
+                            String numCptBancaire = banque.getNumeroCompteBancaire(numCompteClient, typeCompte);
+                            if(numCptBancaire != null){
+                                cnx.setNumeroCompteActuel(numCptBancaire);
+                                cnx.envoyer("SELECT OK");
+                            }
+                            else cnx.envoyer("SELECT NO");
+
+                        }
+                        else  cnx.envoyer("SELECT NO");
+                    }
+                break;
+
+
+                /******************* DEPOT *******************/
+                case "DEPOT": // Crediter le compte
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    argument = evenement.getArgument();
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("DEPOT NO");
+                    }
+                    else {
+                        double montant = Double.parseDouble(argument);
+                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+
+                        if(numeroCompteBancaire != null && cptClient != null){
+                            for(CompteBancaire cptBancaire : cptClient.getComptes()){
+                                if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
+                                    if(cptBancaire.crediter(montant)){
+                                        cnx.envoyer("DEPOT OK");
+                                    }
+                                    else cnx.envoyer("DEPOT NO");
+                                }
+                                else cnx.envoyer("DEPOT NO");
+                            }
+                        }
+                        else cnx.envoyer("DEPOT NO");
+
+                    }
+                    break;
+
+                /******************* RETRAIT *******************/
+                case "RETRAIT": // Debiter le compte
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    argument = evenement.getArgument();
+
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("RETRAIT NO");
+                    }
+                    else {
+                        double montant = Double.parseDouble(argument);
+                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+                        if(numeroCompteBancaire != null && cptClient != null){
+                            for(CompteBancaire cptBancaire : cptClient.getComptes()){
+                                if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
+                                    if(cptBancaire.debiter(montant)){
+                                        cnx.envoyer("RETRAIT OK");
+                                    }
+                                    else cnx.envoyer("RETRAIT NO");
+
+                                }
+                                else cnx.envoyer("RETRAIT NO");
+                            }
+                        }
+                        else cnx.envoyer("RETRAIT NO");
+
+                    }
+                    break;
+
+
+                /******************* FACTURE *******************/
+                case "FACTURE": // payer des factures
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    argument = evenement.getArgument();
+
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("FACTURE NO");
+                    }
+                    else {
+                        String[] facture = argument.split(" ");
+                        double montant = Double.parseDouble(facture[0]);
+                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+                        if(numeroCompteBancaire != null && cptClient != null){
+                            for(CompteBancaire cptBancaire : cptClient.getComptes()){
+                                if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
+                                    if(cptBancaire.debiter(montant)){
+                                        cnx.envoyer("FACTURE OK");
+                                    }
+                                    else cnx.envoyer("FACTURE NO");
+
+                                }
+                                else cnx.envoyer("FACTURE NO");
+                            }
+                        }
+                        else cnx.envoyer("FACTURE NO");
+
+                    }
+                    break;
+
+
+                /******************* TRANSFER *******************/
+                case "TRANSFER":
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    argument = evenement.getArgument();
+
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("TRANSFER NO");
+                    }
+                    else {
+                        String[] transfert = argument.split(" ");
+
+                        double montant = Double.parseDouble(transfert[0]);
+                        String noCompteBancaireDestinataire = transfert[1];
+                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+                        if(numeroCompteBancaire != null && cptClient != null){
+                            for(CompteBancaire cptBancaire : cptClient.getComptes()){
+                                if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
+                                    CompteBancaire cptBancaireDestinataire = banque.getCompteBancaire(noCompteBancaireDestinataire);
+                                    if(cptBancaireDestinataire != null){
+                                        if(cptBancaire.debiter(montant) && cptBancaireDestinataire.crediter(montant)){
+                                            cnx.envoyer("TRANSFER OK");
+                                        }
+                                        else cnx.envoyer("TRANSFER NO");
+                                    }
+
+                                }
+                                else cnx.envoyer("FACTURE NO");
+                            }
+                        }
+                        else cnx.envoyer("FACTURE NO");
+
+                    }
+                    break;
+
+
                 /******************* TRAITEMENT PAR DÉFAUT *******************/
                 default: //Renvoyer le texte recu convertit en majuscules :
                     msg = (evenement.getType() + " " + evenement.getArgument()).toUpperCase();

@@ -94,6 +94,25 @@ public class Banque implements Serializable {
      * @return true si le compte a été créé correctement
      */
     public boolean ajouter(String numCompteClient, String nip) {
+        String regexNumCompte = "^[A-Z0-9]{6,8}$";
+        String regexNip = "^[0-9]{4,5}$";
+        if(numCompteClient.matches(regexNumCompte) && nip.matches(regexNip)){
+            if(getCompteClient(numCompteClient)==null){
+                CompteClient cptClient = new CompteClient(numCompteClient, nip);
+
+                String nouveauNoCompte = CompteBancaire.genereNouveauNumero();
+
+                CompteCheque cptCheque = new CompteCheque(nouveauNoCompte);
+
+                cptClient.ajouter(cptCheque);
+
+                comptes.add(cptClient);
+
+                return true;
+            }
+        }
+        else return false;
+
         /*À compléter et modifier :
             - Vérifier que le numéro a entre 6 et 8 caractères et ne contient que des lettres majuscules et des chiffres.
               Sinon, retourner false.
@@ -118,6 +137,61 @@ public class Banque implements Serializable {
      */
     public String getNumeroCompteParDefaut(String numCompteClient) {
         //À compléter : retourner le numéro du compte-chèque du compte-client.
+        CompteClient cptClient = getCompteClient(numCompteClient);
+
+        for (CompteBancaire compte : cptClient.getComptes()) {
+            // Vérifie si le type de compte est un compte chèque
+            if (compte.getType() == TypeCompte.CHEQUE) {
+                return compte.getNumero(); // Retourne le numéro du compte chèque
+            }
+        }
+
         return null; //À modifier
     }
+
+
+    public boolean possedeUnCompteEpargne(String numeroCompteClient){
+        CompteClient cptClient = getCompteClient(numeroCompteClient);
+
+        for (CompteBancaire compte : cptClient.getComptes()) {
+            // Vérifie si le type de compte est un compte chèque
+            if (compte.getType() == TypeCompte.EPARGNE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean estNumeroDeCompteBancaireExistant(String numeroCompte) {
+        for (CompteClient client : comptes) {
+            for (CompteBancaire compte : client.getComptes()) {
+                if (compte.getNumero().equals(numeroCompte)) {
+                    return true; // Le numéro de compte est déjà pris
+                }
+            }
+        }
+        return false; // Le numéro de compte est disponible
+    }
+
+    public String getNumeroCompteBancaire(String numCptClient, TypeCompte typeCompte) {
+        CompteClient cptClient = getCompteClient(numCptClient);
+        for (CompteBancaire compte : cptClient.getComptes()) {
+            if (compte.getType() == typeCompte) {
+                return compte.getNumero();
+            }
+        }
+        return null;
+    }
+
+    public CompteBancaire getCompteBancaire(String numCompteBancaire){
+        for (CompteClient client : comptes) {
+            for (CompteBancaire compte : client.getComptes()) {
+                if (compte.getNumero().equals(numCompteBancaire)) {
+                    return compte;
+                }
+            }
+        }
+        return null;
+    }
+
 }
