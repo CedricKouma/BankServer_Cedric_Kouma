@@ -14,7 +14,7 @@ public class CompteCheque extends CompteBancaire{
 
     @Override
     public boolean crediter(double montant) {
-        if(solde > 0){
+        if(solde >= 0){
             solde += montant;
             historique.ajouterDebut(new OperationDepot(montant));
             return true;
