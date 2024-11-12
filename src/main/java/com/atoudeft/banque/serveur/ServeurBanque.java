@@ -5,6 +5,7 @@ import com.atoudeft.banque.io.EntreesSorties;
 import com.atoudeft.commun.net.Connexion;
 import com.atoudeft.serveur.Serveur;
 
+import java.util.Iterator;
 import java.util.ListIterator;
 /**
  * Cette classe étend (hérite) la classe Serveur et y ajoute le nécessaire pour que le
@@ -15,7 +16,7 @@ import java.util.ListIterator;
  * @since 2024-08-20
  */
 public class ServeurBanque extends Serveur {
-    public static final int DELAI_INACTIVITE = 5000;
+    public static final int DELAI_INACTIVITE = 500000;
     //Référence vers la banque gérée par ce serveur :
     private Banque banque;
     //Thread qui supprime les connexions inactives :
@@ -83,13 +84,25 @@ public class ServeurBanque extends Serveur {
      * Supprime toutes les connexions inactives (celles dont le délai d'inactivité dépasse DELAI_INACTIVITE - voir énoncé
      * du TP).
      */
-    public void supprimeInactifs() {
+    /*public void supprimeInactifs() {
         for (Connexion cnx:connectes) {
             ConnexionBanque connexionBanque = (ConnexionBanque)cnx;
             if(connexionBanque.estInactifDepuis(DELAI_INACTIVITE)){
                 connexionBanque.envoyer("END");
                 connexionBanque.close();
                 connectes.remove(cnx);
+            }
+        }
+    }*/
+
+    public void supprimeInactifs() {
+        Iterator<Connexion> iterator = connectes.iterator();
+        while (iterator.hasNext()) {
+            ConnexionBanque connexionBanque = (ConnexionBanque) iterator.next();
+            if (connexionBanque.estInactifDepuis(DELAI_INACTIVITE)) {
+                connexionBanque.envoyer("END");
+                connexionBanque.close();
+                iterator.remove(); // Supprimer l'élément en utilisant l'iterator
             }
         }
     }

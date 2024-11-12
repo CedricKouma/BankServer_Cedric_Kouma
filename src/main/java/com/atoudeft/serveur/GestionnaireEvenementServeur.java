@@ -136,6 +136,7 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                        CompteEpargne cptEpargne = new CompteEpargne(nouveauNumero, 5);
                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
                        cptClient.ajouter(cptEpargne);
+                       cnx.envoyer("EPARGNE OK");
                    }
                 break;
 
@@ -185,7 +186,6 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                                     }
                                     else cnx.envoyer("DEPOT NO");
                                 }
-                                else cnx.envoyer("DEPOT NO");
                             }
                         }
                         else cnx.envoyer("DEPOT NO");
@@ -215,7 +215,6 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                                     else cnx.envoyer("RETRAIT NO");
 
                                 }
-                                else cnx.envoyer("RETRAIT NO");
                             }
                         }
                         else cnx.envoyer("RETRAIT NO");
@@ -249,7 +248,6 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                                     else cnx.envoyer("FACTURE NO");
 
                                 }
-                                else cnx.envoyer("FACTURE NO");
                             }
                         }
                         else cnx.envoyer("FACTURE NO");
@@ -271,22 +269,22 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                         String[] transfert = argument.split(" ");
 
                         double montant = Double.parseDouble(transfert[0]);
-                        String noCompteBancaireDestinataire = transfert[1];
+                        String noCompteBancaireExpediteur = transfert[1];
+                        String noCompteBancaireDestinataire = transfert[2];
                         CompteClient cptClient = banque.getCompteClient(numCompteClient);
-                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
-                        if(numeroCompteBancaire != null && cptClient != null){
+                        //String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+                        if(noCompteBancaireExpediteur != null && cptClient != null){
                             for(CompteBancaire cptBancaire : cptClient.getComptes()){
-                                if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
+                                if(cptBancaire.getNumero().equals(noCompteBancaireExpediteur)){
                                     CompteBancaire cptBancaireDestinataire = banque.getCompteBancaire(noCompteBancaireDestinataire);
                                     if(cptBancaireDestinataire != null){
-                                        if(cptBancaire.transferer(montant, numeroCompteBancaire) /*&& cptBancaireDestinataire.crediter(montant)*/){
+                                        if(cptBancaire.transferer(montant, noCompteBancaireExpediteur) && cptBancaireDestinataire.crediter(montant)){
                                             cnx.envoyer("TRANSFER OK");
                                         }
                                         else cnx.envoyer("TRANSFER NO");
                                     }
 
                                 }
-                                else cnx.envoyer("FACTURE NO");
                             }
                         }
                         else cnx.envoyer("FACTURE NO");
@@ -308,9 +306,9 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                         if(numeroCompteBancaire != null && cptClient != null) {
                             for (CompteBancaire cptBancaire : cptClient.getComptes()) {
                                 if (cptBancaire.getNumero().equals(numeroCompteBancaire)) {
+                                    cnx.envoyer("HIST OK");
                                     cnx.envoyer(cptBancaire.afficherHistorique());
                                 }
-                                else cnx.envoyer("HIST NO");
                             }
                         }
                         else cnx.envoyer("HIST NO");

@@ -19,7 +19,7 @@ public class CompteEpargne extends CompteBancaire{
 
     @Override
     public boolean crediter(double montant) {
-        if(solde > 0){
+        if(solde >= 0){
             solde += montant;
             historique.ajouterDebut(new OperationDepot(montant));
 
@@ -31,7 +31,7 @@ public class CompteEpargne extends CompteBancaire{
     @Override
     public boolean debiter(double montant) {
         double montantAvantOperation = solde;
-        if(solde > 0 && solde >= montant){
+        if(solde >= 0 && solde >= montant){
             solde -= montant;
             if(montantAvantOperation >= LIMITE_SOLDE){
                 solde -= FRAIS;
@@ -83,16 +83,16 @@ public class CompteEpargne extends CompteBancaire{
 
     @Override
     public String afficherHistorique() {
-        String historiqueEnTantQueString = "";
+        StringBuilder historiqueEnTantQueString = new StringBuilder();
         if (historique.estVide()) {
             return "Historique vide";
         }
 
         Noeud noeudCourant = historique.getTete();
         while (noeudCourant != null) {
-            historiqueEnTantQueString = noeudCourant.getElement().toString() + "\n";
+            historiqueEnTantQueString.append(noeudCourant.getElement().toString()).append("\n");
             noeudCourant = noeudCourant.getSuivant();
         }
-        return historiqueEnTantQueString;
+        return historiqueEnTantQueString.toString();
     }
 }
