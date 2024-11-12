@@ -1,5 +1,7 @@
 package com.atoudeft.banque;
 
+import com.atoudeft.banque.serveur.OperationRetrait;
+
 public class CompteEpargne extends CompteBancaire{
     /**
      * Crée un compte bancaire.
@@ -19,6 +21,8 @@ public class CompteEpargne extends CompteBancaire{
     public boolean crediter(double montant) {
         if(solde > 0){
             solde += montant;
+            historique.ajouterDebut(new OperationDepot(montant));
+
             return true;
         }
         return false;
@@ -32,6 +36,7 @@ public class CompteEpargne extends CompteBancaire{
             if(montantAvantOperation >= LIMITE_SOLDE){
                 solde -= FRAIS;
             }
+            historique.ajouterDebut(new OperationRetrait(montant));
             return true;
         }
         else {
@@ -41,16 +46,53 @@ public class CompteEpargne extends CompteBancaire{
 
     @Override
     public boolean payerFacture(String numeroFacture, double montant, String description) {
-        return false;
+        double montantAvantOperation = solde;
+        if(solde > 0 && solde >= montant){
+            solde -= montant;
+            if(montantAvantOperation >= LIMITE_SOLDE){
+                solde -= FRAIS;
+            }
+            historique.ajouterDebut(new OperationFacture(montant, numeroFacture, description));
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     @Override
     public boolean transferer(double montant, String numeroCompteDestinataire) {
-        return false;
+        double montantAvantOperation = solde;
+        if(solde > 0 && solde >= montant){
+            solde -= montant;
+            if(montantAvantOperation >= LIMITE_SOLDE){
+                solde -= FRAIS;
+            }
+            historique.ajouterDebut(new OperationTranfer(montant, numeroCompteDestinataire));
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public void ajouterInterets(){
         double interets = solde * tauxInteret;
         solde += interets;
+    }
+
+    @Override
+    public String afficherHistorique() {
+        String historiqueEnTantQueString = "";
+        if (historique.estVide()) {
+            return "Historique vide";
+        }
+
+        Noeud noeudCourant = historique.getTete();
+        while (noeudCourant != null) {
+            historiqueEnTantQueString = noeudCourant.getElement().toString() + "\n";
+            noeudCourant = noeudCourant.getSuivant();
+        }
+        return historiqueEnTantQueString;
     }
 }

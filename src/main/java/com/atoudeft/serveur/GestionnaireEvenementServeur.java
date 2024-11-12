@@ -234,14 +234,16 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                         cnx.envoyer("FACTURE NO");
                     }
                     else {
-                        String[] facture = argument.split(" ");
+                        String[] facture = argument.split(" ", 3);
                         double montant = Double.parseDouble(facture[0]);
+                        String numFacture = facture[1];
+                        String descriptionFacture = facture[2];
                         CompteClient cptClient = banque.getCompteClient(numCompteClient);
                         String numeroCompteBancaire = cnx.getNumeroCompteActuel();
                         if(numeroCompteBancaire != null && cptClient != null){
                             for(CompteBancaire cptBancaire : cptClient.getComptes()){
                                 if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
-                                    if(cptBancaire.debiter(montant)){
+                                    if(cptBancaire.payerFacture(numFacture, montant, descriptionFacture)){
                                         cnx.envoyer("FACTURE OK");
                                     }
                                     else cnx.envoyer("FACTURE NO");
@@ -277,7 +279,7 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                                 if(cptBancaire.getNumero().equals(numeroCompteBancaire)){
                                     CompteBancaire cptBancaireDestinataire = banque.getCompteBancaire(noCompteBancaireDestinataire);
                                     if(cptBancaireDestinataire != null){
-                                        if(cptBancaire.debiter(montant) && cptBancaireDestinataire.crediter(montant)){
+                                        if(cptBancaire.transferer(montant, numeroCompteBancaire) /*&& cptBancaireDestinataire.crediter(montant)*/){
                                             cnx.envoyer("TRANSFER OK");
                                         }
                                         else cnx.envoyer("TRANSFER NO");
@@ -289,6 +291,29 @@ public class GestionnaireEvenementServeur implements GestionnaireEvenement {
                         }
                         else cnx.envoyer("FACTURE NO");
 
+                    }
+                    break;
+
+                /******************* HISTORIQUE *******************/
+                case "HIST": // Consulter l'historique
+                    numCompteClient = cnx.getNumeroCompteClient();
+                    banque = serveurBanque.getBanque();
+                    argument = evenement.getArgument();
+                    if(numCompteClient == null || numCompteClient.isEmpty()){
+                        cnx.envoyer("HIST NO");
+                    }
+                    else{
+                        CompteClient cptClient = banque.getCompteClient(numCompteClient);
+                        String numeroCompteBancaire = cnx.getNumeroCompteActuel();
+                        if(numeroCompteBancaire != null && cptClient != null) {
+                            for (CompteBancaire cptBancaire : cptClient.getComptes()) {
+                                if (cptBancaire.getNumero().equals(numeroCompteBancaire)) {
+                                    cnx.envoyer(cptBancaire.afficherHistorique());
+                                }
+                                else cnx.envoyer("HIST NO");
+                            }
+                        }
+                        else cnx.envoyer("HIST NO");
                     }
                     break;
 

@@ -23,6 +23,10 @@ public class PileChainee implements Serializable {
     public boolean estVide()    { return nbElement == 0; }
     public int getTaille()      { return nbElement; }
 
+    public Noeud getTete() {
+        return tete;
+    }
+
     /**
      * Ajoute un élément à la tête de la liste.
      * @param obj l'élément à ajouter.

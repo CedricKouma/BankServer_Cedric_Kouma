@@ -1,13 +1,15 @@
 package com.atoudeft.banque;
 
-public class OperationFacture extends Operation{
+public class OperationFacture extends Operation {
     private double montant;
-    private String numCompteDestinataire;
+    private String numFacture;
+    private String description;
 
-    public OperationFacture(double montant, String numCompteDestinataire) {
-        super(TypeOperation.FACTURE);
+    public OperationFacture(double montant, String numFacture, String description) {
+        super(TypeOperation.TRANSFER);
         this.montant = montant;
-        this.numCompteDestinataire = numCompteDestinataire;
+        this.numFacture = numFacture;
+        this.description = description;
     }
 
     @Override
